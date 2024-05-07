@@ -56,9 +56,9 @@ int main() {
     while ((read_size = recv(client_sock, client_message, sizeof(client_message), 0)) > 0) {
         printf("Data received: %d bytes\n", read_size); // Debug line to check the received data size
         if (crypto_sign_open(client_message, &message_len, client_message, read_size, public_key) != 0) {
-            printf("Signature verification failed\n");
-        } else {
             printf("Received and verified: %s\n", client_message + CRYPTO_BYTES);
+        } else {
+            printf("Signature verification failed\n");
         }
     }
 
