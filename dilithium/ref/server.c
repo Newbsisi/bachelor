@@ -41,6 +41,8 @@ int main() {
 
     while (1) {
         // Accept incoming connection
+        socklen_t client_addr_len = sizeof(client_addr);
+
         client_addr_len = sizeof(client_addr);
         if ((client_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_addr_len)) == -1) {
             perror("accept");
