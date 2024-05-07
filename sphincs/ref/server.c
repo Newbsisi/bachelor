@@ -8,10 +8,23 @@
 unsigned char public_key[CRYPTO_PUBLICKEYBYTES]; // Initialized properly elsewhere
 
 int load_public_key() {
-    // Implementation assumed, ensure this reads or sets the public key correctly
-    memset(public_key, 0xAB, CRYPTO_PUBLICKEYBYTES);
+    // Replace this with actual code to load the public key from a secure source
+    // For example, reading from a file:
+    FILE *file = fopen("public_key.pem", "rb"); // Adjust filename as needed
+    if (file == NULL) {
+        perror("Failed to open public key file");
+        return 1;
+    }
+    size_t read = fread(public_key, 1, CRYPTO_PUBLICKEYBYTES, file);
+    if (read != CRYPTO_PUBLICKEYBYTES) {
+        fprintf(stderr, "Failed to read public key\n");
+        fclose(file);
+        return 1;
+    }
+    fclose(file);
     return 0;
 }
+
 
 int main() {
     int server_sock, client_sock;
