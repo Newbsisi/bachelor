@@ -6,7 +6,7 @@
 #include "api.h" // Include your API header file
 
 #define MAX_MESSAGE_SIZE 1024
-#define SERVER_PORT 12345 // Port number the server will listen on
+#define SERVER_PORT 8888 // Port number the server will listen on
 
 // Function to verify the signature of the received message
 int verify_signature(const uint8_t *signed_message, size_t signed_message_len, const uint8_t *public_key) {
@@ -41,7 +41,7 @@ int main() {
 
     while (1) {
         // Accept incoming connection
-        client_addr_len = sizeof(client_addr);
+        socklen_t client_addr_len = sizeof(client_addr);
         if ((client_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_addr_len)) == -1) {
             perror("accept");
             close(sockfd);

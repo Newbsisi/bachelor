@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define PORT 12345
+#define PORT 8888
 #define MAXLINE 1024
 
 void error(const char *msg) {
