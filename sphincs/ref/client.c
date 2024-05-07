@@ -23,7 +23,7 @@ int main() {
     }
     puts("Socket created");
 
-    server.sin_addr.s_addr = inet_addr("192.168.1.2"); // IP address of the server
+    server.sin_addr.s_addr = inet_addr("192.168.137.55"); // IP address of the server
     server.sin_family = AF_INET;
     server.sin_port = htons(8888);
 
