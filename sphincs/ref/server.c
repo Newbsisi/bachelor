@@ -5,40 +5,16 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-unsigned char public_key[CRYPTO_PUBLICKEYBYTES]; // Initialized properly elsewhere
-
-int load_public_key() {
-    // Replace this with actual code to load the public key from a secure source
-    // For example, reading from a file:
-    FILE *file = fopen("public_key.pem", "rb"); // Adjust filename as needed
-    if (file == NULL) {
-        perror("Failed to open public key file");
-        return 1;
-    }
-    size_t read = fread(public_key, 1, CRYPTO_PUBLICKEYBYTES, file);
-    if (read != CRYPTO_PUBLICKEYBYTES) {
-        fprintf(stderr, "Failed to read public key\n");
-        fclose(file);
-        return 1;
-    }
-    fclose(file);
-    return 0;
-}
-
+unsigned char public_key[CRYPTO_PUBLICKEYBYTES]; // This will now be set when receiving it from the client
 
 int main() {
     int server_sock, client_sock;
     struct sockaddr_in server, client;
     socklen_t c;
 
-    if (load_public_key() != 0) {
-        fprintf(stderr, "Failed to load public key\n");
-        return 1;
-    }
-
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock == -1) {
-        printf("Could not create socket\n");
+        fprintf(stderr, "Could not create socket\n");
         return 1;
     }
 
@@ -62,6 +38,14 @@ int main() {
     }
     printf("Connection accepted\n");
 
+    // Receive the public key first
+    if (recv(client_sock, public_key, CRYPTO_PUBLICKEYBYTES, 0) < 0) {
+        perror("Failed to receive public key");
+        close(client_sock);
+        return 1;
+    }
+    printf("Public key received\n");
+
     unsigned char client_message[30000];
     unsigned long long message_len;
     int read_size;
@@ -82,7 +66,6 @@ int main() {
             printf("Received and verified message: %.*s\n", (int)message_len, client_message);
         }
     }
-
 
     if (read_size == 0) {
         puts("Client disconnected");
