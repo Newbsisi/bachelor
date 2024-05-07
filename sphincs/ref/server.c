@@ -63,6 +63,7 @@ int main() {
                 printf("Signature verification failed\n");
             } else {
                 printf("Received and verified message: %.*s\n", (int)message_len, client_message);
+                printf(client_message);
             }
         }
 
