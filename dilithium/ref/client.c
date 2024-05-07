@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define PORT 8080
+#define PORT 12345
 #define MAXLINE 1024
 
 void error(const char *msg) {
@@ -28,7 +28,7 @@ int main() {
 
     // Set server address
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Change to the IP address of the target Raspberry Pi
+    servaddr.sin_addr.s_addr = inet_addr("192.168.137.55"); // Change to the IP address of the target Raspberry Pi
     servaddr.sin_port = htons(PORT);
 
     // Connect to server
