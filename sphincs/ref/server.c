@@ -52,12 +52,12 @@ int main() {
     }
     printf("Connection accepted\n");
 
-    unsigned char client_message[2000];
+    unsigned char client_message[30000];
     unsigned long long message_len;
     int read_size;
 
     // Receive a message from client
-    while ((read_size = recv(client_sock, client_message, 2000, 0)) > 0) {
+    while ((read_size = recv(client_sock, client_message, 30000, 0)) > 0) {
         // Verify the signature
         if (crypto_sign_open(client_message, &message_len, client_message, read_size, public_key) != 0) {
             printf("Signature verification failed\n");
