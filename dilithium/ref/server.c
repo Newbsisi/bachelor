@@ -21,7 +21,7 @@ int verify_signature(const uint8_t *signed_message, size_t signed_message_len, c
 int main() {
     int sockfd, client_sockfd;
     struct sockaddr_in server_addr, client_addr;
-    socklen_t client_addr_len;
+    socklen_t client_addr_len = sizeof(client_addr);
     ssize_t bytes_received;
     uint8_t received_message[MAX_MESSAGE_SIZE];
 
@@ -40,8 +40,7 @@ int main() {
     printf("Server listening on port %d...\n", SERVER_PORT);
 
     while (1) {
-        // Accept incoming connection
-        socklen_t client_addr_len = sizeof(client_addr);
+        // Accept incoming connection 
         if ((client_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_addr_len)) == -1) {
             perror("accept");
             close(sockfd);
