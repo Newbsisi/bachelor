@@ -60,13 +60,13 @@ int main() {
     // Sign the message
     if (crypto_sign(signed_message, &signed_message_len, message, strlen((char *)message), secret_key) != 0) {
         fprintf(stderr, "Failed to sign message\n");
-        return 1;
+        return 0;
     }
 
     // Send the message
     if (send(sock, signed_message, signed_message_len, 0) < 0) {
         puts("Send failed");
-        return 1;
+        return 0;
     }
 
     puts("Data Sent\n");
