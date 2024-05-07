@@ -1,4 +1,3 @@
-// File: client.c
 #include "api.h"
 #include <stdio.h>
 #include <string.h>
@@ -40,6 +39,20 @@ int main() {
         fprintf(stderr, "Failed to generate key pair\n");
         return 1;
     }
+
+    // Save public key to a file
+    FILE *fp = fopen("public_key.bin", "wb");
+    if (fp == NULL) {
+        perror("Failed to open file to write public key");
+        return 1;
+    }
+    if (fwrite(public_key, 1, CRYPTO_PUBLICKEYBYTES, fp) != CRYPTO_PUBLICKEYBYTES) {
+        fprintf(stderr, "Failed to write the public key to file\n");
+        fclose(fp);
+        return 1;
+    }
+    fclose(fp);
+    printf("Public key saved to file\n");
 
     // Prepare message
     strcpy((char *)message, "Hello from Raspberry Pi!");
