@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+
 unsigned char public_key[CRYPTO_PUBLICKEYBYTES]; // This will now be set when receiving it from the client
 
 int main() {
