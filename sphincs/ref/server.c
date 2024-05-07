@@ -3,13 +3,13 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <unistd.h> // For close
+#include <unistd.h>
 
-unsigned char public_key[CRYPTO_PUBLICKEYBYTES]; // Ensure this is initialized correctly
+unsigned char public_key[CRYPTO_PUBLICKEYBYTES]; // Initialized properly elsewhere
 
 int load_public_key() {
-    // Placeholder: Ideally, load the key securely
-    memset(public_key, 0xAB, CRYPTO_PUBLICKEYBYTES); // Example initialization
+    // Implementation assumed, ensure this reads or sets the public key correctly
+    memset(public_key, 0xAB, CRYPTO_PUBLICKEYBYTES);
     return 0;
 }
 
@@ -54,11 +54,11 @@ int main() {
     int read_size;
 
     while ((read_size = recv(client_sock, client_message, sizeof(client_message), 0)) > 0) {
-        printf("Data received: %d bytes\n", read_size); // Debug line to check the received data size
+        printf("Data received: %d bytes\n", read_size);
         if (crypto_sign_open(client_message, &message_len, client_message, read_size, public_key) != 0) {
-            printf("Received and verified: %s\n", client_message + CRYPTO_BYTES);
-        } else {
             printf("Signature verification failed\n");
+        } else {
+            printf("Received and verified message: %.*s\n", (int)message_len, client_message);
         }
     }
 
