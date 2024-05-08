@@ -1,77 +1,96 @@
 #include "api.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define PORT 8888
+#define MAX_PACKET_SIZE 20000000
 
-unsigned char public_key[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
-unsigned char secret_key[pqcrystals_dilithium5_ref_SECRETKEYBYTES];
+
+void error(const char *msg) {
+    perror(msg);
+    exit(1);
+}
 
 int main() {
-    int server_sock, client_sock;
-    struct sockaddr_in server, client;
-    socklen_t c;
+    int sockfd, newsockfd;
+    socklen_t clilen;
+    struct sockaddr_in servaddr, cliaddr;
 
     // Create socket
-    server_sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_sock == -1) {
-        fprintf(stderr, "Could not create socket\n");
-        return 1;
-    }
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+        error("Socket creation failed");
 
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(PORT);
+    memset(&servaddr, 0, sizeof(servaddr));
 
-    // Bind
-    if (bind(server_sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        perror("Bind failed");
-        return 1;
-    }
+    // Configure server address
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(PORT);
+
+    // Bind socket
+    if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
+        error("Socket bind failed");
 
     // Listen
-    listen(server_sock, 3);
-    printf("Server listening for incoming connections...\n");
+    if (listen(sockfd, 5) < 0)
+        error("Socket listen failed");
 
-    // Generate key pair
-    if (pqcrystals_dilithium5_ref_keypair(public_key, secret_key) != 0) {
-        fprintf(stderr, "Failed to generate key pair\n");
+    printf("Server listening on port %d...\n", PORT);
+
+    clilen = sizeof(cliaddr);
+
+    // Accept connection from client
+    if ((newsockfd = accept(sockfd, (struct sockaddr *)&cliaddr, &clilen)) < 0)
+        error("Socket accept failed");
+
+    printf("Client connected\n");
+
+    // Receive public key from client
+    uint8_t pk[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
+    if (recv(newsockfd, pk, sizeof(pk), 0) < 0) {
+        perror("Receive failed");
         return 1;
     }
 
-    // Accept and interact with multiple clients
-    while (1) {
-        c = sizeof(struct sockaddr_in);
-        client_sock = accept(server_sock, (struct sockaddr *)&client, &c);
-        if (client_sock < 0) {
-            perror("Accept failed");
-            continue;
-        }
+    printf("Received public key from client\n");
 
-        printf("Connection accepted from %s:%d\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
-
-        // Process multiple messages
-        unsigned char client_message[30000];
-        size_t message_len;
-        int read_size;
-
-        while ((read_size = recv(client_sock, client_message, sizeof(client_message), 0)) > 0) {
-            printf("Data received: %d bytes\n", read_size);
-
-            // Verify the signature and extract the message
-            if (pqcrystals_dilithium5_ref_open(client_message, &message_len, client_message, read_size, public_key) != 0) {
-                printf("Signature verification failed\n");
-            } else {
-                printf("Signature verification succeeded\n");
-            }
-        }
-
-        // Close client socket
-        close(client_sock);
+    // Receive message and signature from client
+    size_t packet_len;
+    if (recv(newsockfd, &packet_len, sizeof(size_t), 0) < 0) {
+        perror("Receive failed");
+        return 1;
     }
+
+    if (packet_len > MAX_PACKET_SIZE) {
+        fprintf(stderr, "Packet is too large\n");
+        return 1;
+    }
+
+    uint8_t packet[packet_len];
+    if (recv(newsockfd, packet, packet_len, 0) < 0) {
+        perror("Receive failed");
+        return 1;
+    }
+
+    // Verify signature
+    if (pqcrystals_dilithium5_ref_verify(packet + strlen((char *)packet), pqcrystals_dilithium5_ref_BYTES, packet, strlen((char *)packet), pk) != 0) {
+        fprintf(stderr, "Signature verification failed\n");
+        return 1;
+    }
+
+    printf("Signature verified successfully\n");
+
+    // Extract and print message
+    printf("Received Message: %s\n", packet);
+
+    // Close sockets
+    close(newsockfd);
+    close(sockfd);
 
     return 0;
 }

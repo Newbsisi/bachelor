@@ -8,7 +8,6 @@
 #include <arpa/inet.h>
 
 #define PORT 8888
-#define MAXLINE 1024
 
 void error(const char *msg) {
     perror(msg);
@@ -18,7 +17,6 @@ void error(const char *msg) {
 int main() {
     int sockfd;
     struct sockaddr_in servaddr;
-    char buffer[MAXLINE];
 
     // Initialize socket
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -38,7 +36,17 @@ int main() {
     // Generate key pair
     uint8_t pk[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
     uint8_t sk[pqcrystals_dilithium5_ref_SECRETKEYBYTES];
-    pqcrystals_dilithium5_ref_keypair(pk, sk);
+
+    // Generate key pair
+    if (pqcrystals_dilithium5_ref_keypair(pk, sk) != 0) {
+        fprintf(stderr, "Failed to generate key pair\n");
+        return 1;
+    }
+    // Send the public key to the server
+    if (send(sockfd, pk, sizeof(pk), 0) < 0) {
+        perror("Send failed");
+        return 1;
+    }
 
     // Message
     const char *message = "Hello, Raspberry Pi!";
