@@ -12,7 +12,6 @@ int main() {
     struct sockaddr_in server, client;
     socklen_t c;
 
-    // Create socket
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock == -1) {
         fprintf(stderr, "Could not create socket\n");
@@ -23,17 +22,14 @@ int main() {
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(8888);
 
-    // Bind
     if (bind(server_sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
         perror("Bind failed");
         return 1;
     }
 
-    // Listen
     listen(server_sock, 3);
     printf("Server listening for incoming connections...\n");
 
-    // Accept and interact with multiple clients
     while (1) {
         c = sizeof(struct sockaddr_in);
         client_sock = accept(server_sock, (struct sockaddr *)&client, &c);
@@ -43,33 +39,36 @@ int main() {
         }
         printf("Connection accepted from %s:%d\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
 
-        // Receive the public key first
-        if (recv(client_sock, public_key, CRYPTO_PUBLICKEYBYTES, 0) < 0) {
-            perror("Failed to receive public key");
+        if (recv(client_sock, public_key, CRYPTO_PUBLICKEYBYTES, MSG_WAITALL) != CRYPTO_PUBLICKEYBYTES) {
+            perror("Failed to receive full public key");
             close(client_sock);
             continue;
         }
         printf("Public key received\n");
 
-        // Process multiple messages
         unsigned char client_message[30000];
         unsigned long long message_len;
-        int read_size;
-        while ((read_size = recv(client_sock, client_message, sizeof(client_message), 0)) > 0) {
-            printf("Data received: %d bytes\n", read_size);
+        int total_read_size = 0, current_read_size;
+
+        while ((current_read_size = recv(client_sock, client_message + total_read_size, sizeof(client_message) - total_read_size, 0)) > 0) {
+            total_read_size += current_read_size;
+            // Optionally add a check here to see if you've received a full message based on your protocol
+        }
+
+        if (total_read_size > 0) {
+            printf("Data received: %d bytes\n", total_read_size);
 
             // Verify the signature and extract the message
-            if (crypto_sign_open(client_message, &message_len, client_message, read_size, public_key) == 0) {
+            if (crypto_sign_open(client_message, &message_len, client_message, total_read_size, public_key) != 0) {
                 printf("Signature verification failed\n");
             } else {
                 printf("Received and verified message: %.*s\n", (int)message_len, client_message);
-                printf(client_message);
             }
         }
 
-        if (read_size == 0) {
+        if (current_read_size == 0) {
             puts("Client disconnected");
-        } else if (read_size == -1) {
+        } else if (current_read_size == -1) {
             perror("Receive failed");
         }
 

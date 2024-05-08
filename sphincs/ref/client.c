@@ -8,7 +8,7 @@ int main() {
     int sock;
     struct sockaddr_in server;
     unsigned char message[30000];
-    unsigned char signed_message[30000]; // Buffer size may need adjustment based on signature size
+    unsigned char signed_message[30000 + CRYPTO_PUBLICKEYBYTES]; // Adjust buffer size for signature
     unsigned long long signed_message_len;
 
     unsigned char public_key[CRYPTO_PUBLICKEYBYTES];
@@ -22,7 +22,7 @@ int main() {
     }
     puts("Socket created");
 
-    server.sin_addr.s_addr = inet_addr("192.168.137.55"); // IP address of the server
+    server.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // IP address of the server
     server.sin_family = AF_INET;
     server.sin_port = htons(8888);
 
@@ -40,19 +40,12 @@ int main() {
         return 1;
     }
 
-    // Save public key to a file
-    FILE *fp = fopen("public_key.bin", "wb");
-    if (fp == NULL) {
-        perror("Failed to open file to write public key");
+    // Send the public key first to the server
+    if (send(sock, public_key, CRYPTO_PUBLICKEYBYTES, 0) < 0) {
+        perror("Failed to send public key");
         return 1;
     }
-    if (fwrite(public_key, 1, CRYPTO_PUBLICKEYBYTES, fp) != CRYPTO_PUBLICKEYBYTES) {
-        fprintf(stderr, "Failed to write the public key to file\n");
-        fclose(fp);
-        return 1;
-    }
-    fclose(fp);
-    printf("Public key saved to file\n");
+    puts("Public key sent to server");
 
     // Prepare message
     strcpy((char *)message, "Hello from Raspberry Pi!");
@@ -60,16 +53,16 @@ int main() {
     // Sign the message
     if (crypto_sign(signed_message, &signed_message_len, message, strlen((char *)message), secret_key) != 0) {
         fprintf(stderr, "Failed to sign message\n");
-        return 0;
+        return 1;
     }
 
-    // Send the message
+    // Send the signed message
     if (send(sock, signed_message, signed_message_len, 0) < 0) {
-        puts("Send failed");
-        return 0;
+        perror("Send failed");
+        return 1;
     }
 
-    puts("Data Sent\n");
+    puts("Signed data sent\n");
     close(sock);
     return 0;
 }
