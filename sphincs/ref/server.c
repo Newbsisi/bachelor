@@ -1,9 +1,12 @@
+#define _POSIX_C_SOURCE 200809L
 #include "api.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <time.h> // Include for high-precision timing
+
 
 unsigned char public_key[CRYPTO_PUBLICKEYBYTES];
 
@@ -11,6 +14,9 @@ int main() {
     int server_sock, client_sock;
     struct sockaddr_in server, client;
     socklen_t c;
+
+    struct timespec start, end; // Use timespec structure for nanosecond precision
+    double cpu_time_used;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock == -1) {
@@ -50,21 +56,23 @@ int main() {
         unsigned long long message_len;
         int total_read_size = 0, current_read_size;
 
+        clock_gettime(CLOCK_MONOTONIC, &start); // Start high-precision timer
         while ((current_read_size = recv(client_sock, client_message + total_read_size, sizeof(client_message) - total_read_size, 0)) > 0) {
             total_read_size += current_read_size;
-            // Optionally add a check here to see if you've received a full message based on your protocol
         }
 
         if (total_read_size > 0) {
             printf("Data received: %d bytes\n", total_read_size);
-
-            // Verify the signature and extract the message
             if (crypto_sign_open(client_message, &message_len, client_message, total_read_size, public_key) != 0) {
                 printf("Signature verification failed\n");
             } else {
                 printf("Received and verified message: %.*s\n", (int)message_len, client_message);
             }
         }
+        clock_gettime(CLOCK_MONOTONIC, &end); // End high-precision timer
+
+        cpu_time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0; // Calculate in seconds
+        printf("Processing time: %.12f seconds\n", cpu_time_used); // Print with nanosecond precision
 
         if (current_read_size == 0) {
             puts("Client disconnected");
