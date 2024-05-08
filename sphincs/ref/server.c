@@ -5,8 +5,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <time.h> // Include for high-precision timing
-
+#include <time.h>
 
 unsigned char public_key[CRYPTO_PUBLICKEYBYTES];
 
@@ -14,9 +13,9 @@ int main() {
     int server_sock, client_sock;
     struct sockaddr_in server, client;
     socklen_t c;
-
-    struct timespec start, end; // Use timespec structure for nanosecond precision
+    struct timespec start, end; // Variables to store start and end times
     double cpu_time_used;
+
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock == -1) {
@@ -57,22 +56,28 @@ int main() {
         int total_read_size = 0, current_read_size;
 
         clock_gettime(CLOCK_MONOTONIC, &start); // Start high-precision timer
+
         while ((current_read_size = recv(client_sock, client_message + total_read_size, sizeof(client_message) - total_read_size, 0)) > 0) {
             total_read_size += current_read_size;
         }
 
         if (total_read_size > 0) {
-            printf("Data received: %d bytes\n", total_read_size);
+            client_message[total_read_size] = '\0'; // Ensure null termination
+            printf("Package size: %d bytes\n", total_read_size);
+            printf("Key size: %d bytes\n", CRYPTO_PUBLICKEYBYTES);
+
             if (crypto_sign_open(client_message, &message_len, client_message, total_read_size, public_key) != 0) {
                 printf("Signature verification failed\n");
             } else {
-                printf("Received and verified message: %.*s\n", (int)message_len, client_message);
+                printf("Verified message content: %.*s\n", (int)message_len, client_message);
             }
         }
+
         clock_gettime(CLOCK_MONOTONIC, &end); // End high-precision timer
 
-        cpu_time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0; // Calculate in seconds
-        printf("Processing time: %.12f seconds\n", cpu_time_used); // Print with nanosecond precision
+        cpu_time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0; // Calculate elapsed time in seconds
+        printf("Processing time: %.9f seconds\n", cpu_time_used); // Print time with nanosecond precision
+
 
         if (current_read_size == 0) {
             puts("Client disconnected");

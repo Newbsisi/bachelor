@@ -23,7 +23,7 @@ int main() {
     puts("Socket created");
 
     server.sin_addr.s_addr = inet_addr("192.168.137.55"); // IP address of the server
-    //server.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // IP address of the server
+    //server.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // localhost
     server.sin_family = AF_INET;
     server.sin_port = htons(8888);
 
@@ -49,7 +49,7 @@ int main() {
     puts("Public key sent to server");
 
     // Prepare message
-    strcpy((char *)message, "Hello from Raspberry Pi!");
+    strcpy((char *)message, "Hello World!");
 
     // Sign the message
     if (crypto_sign(signed_message, &signed_message_len, message, strlen((char *)message), secret_key) != 0) {
@@ -62,6 +62,14 @@ int main() {
         perror("Send failed");
         return 1;
     }
+
+    //Display signature length
+    int signature = crypto_sign_bytes();
+    printf("Signature length %d\n", signature);
+
+    //Display public key size
+    int publicKeySize = crypto_sign_publickeybytes();
+    printf("Public key size %d\n", publicKeySize);
 
     puts("Signed data sent\n");
     close(sock);
