@@ -7,8 +7,8 @@
 int main() {
     int sock;
     struct sockaddr_in server;
-    unsigned char message[30000];
-    unsigned char signed_message[30000 + CRYPTO_PUBLICKEYBYTES]; // Adjust buffer size for signature
+    unsigned char message[20000];
+    unsigned char signed_message[20000 + CRYPTO_PUBLICKEYBYTES]; // Adjust buffer size for signature
     unsigned long long signed_message_len;
 
     unsigned char public_key[CRYPTO_PUBLICKEYBYTES];

@@ -46,7 +46,7 @@ int main() {
         }
         printf("Public key received\n");
 
-        unsigned char client_message[30000];
+        unsigned char client_message[20000];
         unsigned long long message_len;
         int total_read_size = 0, current_read_size;
 
