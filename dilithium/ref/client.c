@@ -28,7 +28,7 @@ int main() {
 
     // Set server address
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr("192.168.137.55"); // Change to the IP address of the target Raspberry Pi
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Change to the IP address of the target Raspberry Pi
     servaddr.sin_port = htons(PORT);
 
     // Connect to server
@@ -40,7 +40,7 @@ int main() {
     uint8_t sk[pqcrystals_dilithium5_ref_SECRETKEYBYTES];
     pqcrystals_dilithium5_ref_keypair(pk, sk);
 
-    // Example message
+    // Message
     const char *message = "Hello, Raspberry Pi!";
 
     // Sign message
