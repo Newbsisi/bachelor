@@ -40,7 +40,7 @@ int main() {
     uint8_t sk[pqcrystals_dilithium5_ref_SECRETKEYBYTES];
     pqcrystals_dilithium5_ref_keypair(pk, sk);
 
-    // Example message
+    // Message
     const char *message = "Hello, Raspberry Pi!";
 
     // Sign message

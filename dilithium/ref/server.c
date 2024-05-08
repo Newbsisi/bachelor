@@ -7,8 +7,8 @@
 
 #define PORT 8888
 
-unsigned char public_key[CRYPTO_PUBLICKEYBYTES];
-unsigned char secret_key[CRYPTO_SECRETKEYBYTES];
+unsigned char public_key[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
+unsigned char secret_key[pqcrystals_dilithium5_ref_SECRETKEYBYTES];
 
 int main() {
     int server_sock, client_sock;
@@ -37,7 +37,7 @@ int main() {
     printf("Server listening for incoming connections...\n");
 
     // Generate key pair
-    if (crypto_sign_keypair(public_key, secret_key) != 0) {
+    if (pqcrystals_dilithium5_ref_keypair(public_key, secret_key) != 0) {
         fprintf(stderr, "Failed to generate key pair\n");
         return 1;
     }
@@ -55,14 +55,14 @@ int main() {
 
         // Process multiple messages
         unsigned char client_message[30000];
-        unsigned long long message_len;
+        size_t message_len;
         int read_size;
 
         while ((read_size = recv(client_sock, client_message, sizeof(client_message), 0)) > 0) {
             printf("Data received: %d bytes\n", read_size);
 
             // Verify the signature and extract the message
-            if (crypto_sign_open(client_message, &message_len, client_message, read_size, public_key) != 0) {
+            if (pqcrystals_dilithium5_ref_open(client_message, &message_len, client_message, read_size, public_key) != 0) {
                 printf("Signature verification failed\n");
             } else {
                 printf("Signature verification succeeded\n");
@@ -72,9 +72,6 @@ int main() {
         // Close client socket
         close(client_sock);
     }
-
-    // Close server socket
-    close(server_sock);
 
     return 0;
 }
