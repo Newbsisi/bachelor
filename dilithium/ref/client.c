@@ -3,65 +3,59 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+
 #include "api.h"
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 8080
+#define PORT 8080
+#define SERVER_ADDR "127.0.0.1"
 
 int main() {
+    int sock = 0;
+    struct sockaddr_in serv_addr;
+
     // Create socket
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("Socket creation failed");
-        return 1;
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("Socket creation error");
+        return -1;
     }
 
-    // Server address
-    struct sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(SERVER_PORT);
-    if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0) {
-        perror("Invalid address");
-        return 1;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+
+    // Convert IPv4 and IPv6 addresses from text to binary form
+    if (inet_pton(AF_INET, SERVER_ADDR, &serv_addr.sin_addr) <= 0) {
+        perror("Invalid address/ Address not supported");
+        return -1;
     }
 
     // Connect to server
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Connection failed");
-        return 1;
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("Connection Failed");
+        return -1;
     }
 
-    uint8_t pk[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
-    uint8_t sk[pqcrystals_dilithium5_ref_SECRETKEYBYTES];
-    if (pqcrystals_dilithium5_ref_keypair(pk, sk) != 0) {
-        fprintf(stderr, "Key pair generation failed\n");
-        return 1;
-    }
+    // Generate keypair
+    uint8_t pk[pqcrystals_dilithium3_PUBLICKEYBYTES];
+    uint8_t sk[pqcrystals_dilithium3_SECRETKEYBYTES];
+    pqcrystals_dilithium3_ref_keypair(pk, sk);
 
-    // Example message to sign
-    const char *message = "Hello, server!";
-    size_t mlen = strlen(message);
+    // Send public key to the server
+    send(sock, pk, pqcrystals_dilithium3_PUBLICKEYBYTES, 0);
+    printf("Public key sent to server\n");
 
-    // Sign the message
-    uint8_t sig[pqcrystals_dilithium5_ref_BYTES];
-    size_t siglen;
-    if (pqcrystals_dilithium5_ref_signature(sig, &siglen, (const uint8_t *)message, mlen, sk) != 0) {
-        fprintf(stderr, "Signing failed\n");
-        return 1;
-    }
+    // Sign a message
+    uint8_t message[] = "Hello, Server!";
+    size_t message_len = strlen((char*)message);
+    uint8_t signature[pqcrystals_dilithium3_BYTES];
+    size_t signature_len;
+    pqcrystals_dilithium3_ref_signature(signature, &signature_len, message, message_len, sk);
 
-    // Send public key to server
-    if (send(sockfd, pk, pqcrystals_dilithium5_ref_PUBLICKEYBYTES, 0) < 0) {
-        perror("Sending public key failed");
-        return 1;
-    }
+    // Send message and signature to the server
+    send(sock, message, message_len, 0);
+    send(sock, signature, signature_len, 0);
 
-    // Send signed message to server
-    if (send(sockfd, sig, siglen, 0) < 0) {
-        perror("Sending signed message failed");
-        return 1;
-    }
+    printf("Message and signature sent to server\n");
 
-    close(sockfd);
+    close(sock);
     return 0;
 }

@@ -11,10 +11,10 @@ KECCAK_HEADERS = $(HEADERS) fips202.h
 .PHONY: all speed shared clean
 
 all: \
-  test/test_dilithium2 \
-  test/test_dilithium3 \
   client \
   server \
+  test/test_dilithium2 \
+  test/test_dilithium3 \
   test/test_dilithium5 \
   test/test_vectors2 \
   test/test_vectors3 \
@@ -57,12 +57,12 @@ test/test_dilithium2: test/test_dilithium.c randombytes.c $(KECCAK_SOURCES) \
 
 client: client.c randombytes.c $(KECCAK_SOURCES) \
 	$(KECCAK_HEADERS)
-		$(CC) $(CFLAGS) -DDILITHIUM_MODE=5 \
+		$(CC) $(CFLAGS) -DDILITHIUM_MODE=3 \
 			-o $@ $< randombytes.c $(KECCAK_SOURCES)
 
 server: server.c randombytes.c $(KECCAK_SOURCES) \
 	$(KECCAK_HEADERS)
-		$(CC) $(CFLAGS) -DDILITHIUM_MODE=5 \
+		$(CC) $(CFLAGS) -DDILITHIUM_MODE=3 \
 			-o $@ $< randombytes.c $(KECCAK_SOURCES)
 
 test/test_dilithium3: test/test_dilithium.c randombytes.c $(KECCAK_SOURCES) \
