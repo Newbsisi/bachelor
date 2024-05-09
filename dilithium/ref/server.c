@@ -1,91 +1,78 @@
-#include "api.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include "api.h"
 
-#define PORT 8888
-#define MAX_PACKET_SIZE 10000
-
-
-void error(const char *msg) {
-    perror(msg);
-    exit(1);
-}
+#define SERVER_PORT 8080
 
 int main() {
-    int sockfd, newsockfd;
-    socklen_t clilen;
-    struct sockaddr_in servaddr, cliaddr;
-
     // Create socket
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-        error("Socket creation failed");
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("Socket creation failed");
+        return 1;
+    }
 
-    memset(&servaddr, 0, sizeof(servaddr));
-
-    // Configure server address
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = INADDR_ANY;
-    servaddr.sin_port = htons(PORT);
+    // Server address
+    struct sockaddr_in server_addr, client_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(SERVER_PORT);
 
     // Bind socket
-    if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-        error("Socket bind failed");
+    if (bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Binding failed");
+        return 1;
+    }
 
-    // Listen
-    if (listen(sockfd, 5) < 0)
-        error("Socket listen failed");
+    // Listen for connections
+    if (listen(sockfd, 5) < 0) {
+        perror("Listening failed");
+        return 1;
+    }
 
-    printf("Server listening on port %d...\n", PORT);
+    printf("Server listening on port %d\n", SERVER_PORT);
 
-    clilen = sizeof(cliaddr);
-
-    // Accept connection from client
-    if ((newsockfd = accept(sockfd, (struct sockaddr *)&cliaddr, &clilen)) < 0)
-        error("Socket accept failed");
+    // Accept connections
+    socklen_t client_len = sizeof(client_addr);
+    int client_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+    if (client_sockfd < 0) {
+        perror("Accepting connection failed");
+        return 1;
+    }
 
     printf("Client connected\n");
 
     // Receive public key from client
     uint8_t pk[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
-    if (recv(newsockfd, pk, sizeof(pk), 0) < 0) {
-        perror("Receive failed");
+    if (recv(client_sockfd, pk, pqcrystals_dilithium5_ref_PUBLICKEYBYTES, 0) < 0) {
+        perror("Receiving public key failed");
         return 1;
     }
 
-    printf("Received public key from client\n");
-
-    // Receive message and signature from client
-    size_t packet_len;
-    if (recv(newsockfd, &packet_len, sizeof(size_t), 0) < 0) {
-        perror("Receive failed");
+    // Receive signed message from client
+    uint8_t signed_message[pqcrystals_dilithium5_ref_BYTES];
+    if (recv(client_sockfd, signed_message, sizeof(signed_message), 0) < 0) {
+        perror("Receiving signed message failed");
         return 1;
     }
 
-    uint8_t packet[packet_len];
-    if (recv(newsockfd, packet, packet_len, 0) < 0) {
-        perror("Receive failed");
-        return 1;
-    }
+    // Extracting the signature and the message from the received signed message
+    uint8_t *signature = signed_message;
+    uint8_t *message = signed_message + pqcrystals_dilithium5_ref_BYTES;
+    size_t mlen = pqcrystals_dilithium5_ref_BYTES;
+
+    printf("Received signature: ");
 
     // Verify signature
-    if (pqcrystals_dilithium5_ref_verify(packet + strlen((char *)packet), pqcrystals_dilithium5_ref_BYTES, packet, strlen((char *)packet), pk) != 0) {
-        fprintf(stderr, "Signature verification failed\n");
-        return 1;
+    if (pqcrystals_dilithium5_ref_verify(signature, pqcrystals_dilithium5_ref_BYTES, message, mlen, pk) == 0) {
+        printf("Signature verified. Message: %s\n", message);
+    } else {
+        printf("Signature verification failed\n");
     }
 
-    printf("Signature verified successfully\n");
-
-    // Extract and print message
-    printf("Received Message: %s\n", packet);
-
-    // Close sockets
-    close(newsockfd);
+    close(client_sockfd);
     close(sockfd);
-
     return 0;
 }
