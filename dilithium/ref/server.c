@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 
 #define PORT 8888
-#define MAX_PACKET_SIZE 20000000
+#define MAX_PACKET_SIZE 10000
 
 
 void error(const char *msg) {
