@@ -62,8 +62,6 @@ int main() {
     uint8_t *message = signed_message + pqcrystals_dilithium5_ref_BYTES;
     size_t mlen = pqcrystals_dilithium5_ref_BYTES;
 
-    printf("Received signature: ");
-
     // Verify signature
     if (pqcrystals_dilithium5_ref_verify(signature, pqcrystals_dilithium5_ref_BYTES, message, mlen, pk) == 0) {
         printf("Signature verified. Message: %s\n", message);
