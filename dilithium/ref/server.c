@@ -44,7 +44,6 @@ int main() {
 
     printf("Client connected\n");
 
-    // Receive public key from client
     uint8_t pk[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
     if (recv(client_sockfd, pk, pqcrystals_dilithium5_ref_PUBLICKEYBYTES, 0) < 0) {
         perror("Receiving public key failed");

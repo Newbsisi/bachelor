@@ -31,7 +31,6 @@ int main() {
         return 1;
     }
 
-    // Generate key pair
     uint8_t pk[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
     uint8_t sk[pqcrystals_dilithium5_ref_SECRETKEYBYTES];
     if (pqcrystals_dilithium5_ref_keypair(pk, sk) != 0) {
