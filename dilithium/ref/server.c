@@ -66,11 +66,6 @@ int main() {
         return 1;
     }
 
-    if (packet_len > MAX_PACKET_SIZE) {
-        fprintf(stderr, "Packet is too large\n");
-        return 1;
-    }
-
     uint8_t packet[packet_len];
     if (recv(newsockfd, packet, packet_len, 0) < 0) {
         perror("Receive failed");
