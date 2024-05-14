@@ -8,7 +8,7 @@ int main() {
     int sock;
     struct sockaddr_in server;
     unsigned char message[20000];
-    unsigned char signed_message[20000 + CRYPTO_PUBLICKEYBYTES]; // Adjust buffer size for signature
+    unsigned char signed_message[20000 + CRYPTO_PUBLICKEYBYTES];
     unsigned long long signed_message_len;
 
     unsigned char public_key[CRYPTO_PUBLICKEYBYTES];
@@ -22,8 +22,8 @@ int main() {
     }
     puts("Socket created");
 
-    server.sin_addr.s_addr = inet_addr("192.168.137.55"); // IP address of the server
-    //server.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // localhost
+    //server.sin_addr.s_addr = inet_addr("192.168.137.55"); // IP address of the server
+    server.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // localhost
     server.sin_family = AF_INET;
     server.sin_port = htons(8888);
 
