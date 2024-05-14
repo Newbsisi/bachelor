@@ -30,9 +30,9 @@ BENCHMARK = test/benchmark
 
 .PHONY: clean test benchmark
 
-default: PQCgenKAT_sign client server servertest
+default: PQCgenKAT_sign client server
 
-all: PQCgenKAT_sign tests benchmarks client server servertest
+all: PQCgenKAT_sign tests benchmarks client server
 
 tests: $(TESTS)
 
@@ -49,9 +49,6 @@ client: client.c $(DET_SOURCES) $(DET_HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
 
 server: server.c $(DET_SOURCES) $(DET_HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
-
-servertest: servertest.c $(DET_SOURCES) $(DET_HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
 
 test/benchmark: test/benchmark.c test/cycles.c $(SOURCES) $(HEADERS)
