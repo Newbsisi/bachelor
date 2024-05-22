@@ -42,6 +42,7 @@ int main() {
         return 1;
     }
 
+
     // Message
     const char *message = "Hello, server!";
     size_t mlen = strlen(message);
@@ -60,8 +61,6 @@ int main() {
     } else {
         printf("Signature verified\n");
     }
-
-    printf("Signature length is %d\n", siglen);
 
     // Send signature length to server
     ssize_t send_result = send(sockfd, &siglen, sizeof(siglen), 0);
@@ -96,6 +95,14 @@ int main() {
     }
 
     printf("Message sent\n");
+    printf("Message length is %lu\n", mlen);
+    printf("Message is %s\n", message);
+    printf("Public key length is %d\n", pqcrystals_dilithium5_ref_PUBLICKEYBYTES);
+    printf("Signature length is %lu\n", siglen);
+    for(size_t i = 0; i < sizeof(sig); i++) {
+    printf("%02x", sig[i]);
+    }
+    printf("\n");
 
     close(sockfd);
     return 0;

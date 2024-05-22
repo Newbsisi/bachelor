@@ -27,7 +27,7 @@ int main() {
     }
 
     // Listen for connections
-    if (listen(sockfd, 5) < 0) {
+    if (listen(sockfd, 1) < 0) {
         perror("Listening failed");
         return 1;
     }
@@ -59,7 +59,7 @@ int main() {
         perror("Receiving signature length failed");
         return 1;
     } else {
-        printf("Received signature length\n");
+        printf("Received signature length: \n");
     }
 
     uint8_t sig[pqcrystals_dilithium5_ref_BYTES];
@@ -78,7 +78,7 @@ int main() {
     }
     mlen = ntohl(mlen_net); // Convert from network byte order to host byte order
 
-    printf("Received message length: %lu\n", mlen);
+
 
     // Receive message from client
     char *message = malloc(mlen + 1);
@@ -92,15 +92,26 @@ int main() {
         return 1;
     }
     message[mlen] = '\0'; // Null-terminate the received string
-
+    printf("Received message length: %lu\n", mlen);
     printf("Received message: %s\n", message);
+    printf("Received signature length: %lu\n", siglen);
 
-    // Verify signed message
+    // Verify signature
     if(pqcrystals_dilithium5_ref_verify(sig, siglen, (const uint8_t *)message, mlen, pk) != 0) {
         printf("Signature verification failed\n");
     } else {
         printf("Signature verified\n");
     }
+
+    printf("Message length is %lu\n", mlen);
+    printf("Message is %s\n", message);
+    printf("Public key length is %d\n", pqcrystals_dilithium5_ref_PUBLICKEYBYTES);
+    printf("Signature length is %lu\n", siglen);
+
+    for(size_t i = 0; i < sizeof(sig); i++) {
+    printf("%02x", sig[i]);
+    }
+    printf("\n");
 
     close(client_sockfd);
     close(sockfd);
