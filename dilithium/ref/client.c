@@ -42,11 +42,11 @@ int main() {
         return 1;
     }
 
-    // Message to sign
+    // Message
     const char *message = "Hello, server!";
     size_t mlen = strlen(message);
 
-    // Sign the message
+    // Generate Signature
     uint8_t sig[pqcrystals_dilithium5_ref_BYTES];
     size_t siglen;
     if (pqcrystals_dilithium5_ref_signature(sig, &siglen, (const uint8_t *)message, mlen, sk) != 0) {
@@ -54,7 +54,7 @@ int main() {
         return 1;
     }
 
-    // Verify signed message
+    // Verify signature
     if(pqcrystals_dilithium5_ref_verify(sig, siglen, (const uint8_t *)message, mlen, pk) != 0) {
         printf("Signature verification failed\n");
     } else {
