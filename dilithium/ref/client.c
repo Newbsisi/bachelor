@@ -6,7 +6,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "127.0.0.1" //localhost
+//#define SERVER_IP "92.168.137.5" //Raspberry pi server
 #define SERVER_PORT 1234
 #define BUFFER_SIZE 4595
 #define MESSAGEBYTES 14
@@ -39,9 +40,11 @@ int main() {
 
     const char* message = "Hello, server!";
     size_t message_len = strlen(message);
+
     // Sign a message
     pqcrystals_dilithium5_ref(signedMessage, &signedMessageLen, (uint8_t*)message, message_len, secretKey);
 
+    // Verify signed message
     if(pqcrystals_dilithium5_ref_verify((uint8_t*)buffer, &signedMessageLen, signedMessage, sizeof(signedMessage), publicKey) != 0) {
         printf("Signature verification failed\n");
     } else {
