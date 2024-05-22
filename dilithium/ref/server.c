@@ -40,9 +40,9 @@ int main() {
     addr_size = sizeof(clientAddr);
     clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &addr_size);
 
-    // Send public key to client
-    send(clientSocket, publicKey, pqcrystals_dilithium5_ref_PUBLICKEYBYTES, 0);
-    printf("Public key sent to client\n");
+    // Receive public key from client
+    recv(clientSocket, publicKey, sizeof(publicKey), 0);
+    printf("Public key received from client\n");
 
     // Receive signed message from client
     recv(clientSocket, buffer, sizeof(buffer), 0);
