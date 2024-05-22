@@ -13,7 +13,7 @@ int main() {
     int server_sock, client_sock;
     struct sockaddr_in server, client;
     socklen_t c;
-    struct timespec start, end; // Variables to store start and end times
+    struct timespec start, end; // Variables for start and end times
     double cpu_time_used;
 
 
@@ -55,7 +55,7 @@ int main() {
         unsigned long long message_len;
         int total_read_size = 0, current_read_size;
 
-        clock_gettime(CLOCK_MONOTONIC, &start); // Start high-precision timer
+        clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
 
         while ((current_read_size = recv(client_sock, client_message + total_read_size, sizeof(client_message) - total_read_size, 0)) > 0) {
             total_read_size += current_read_size;
@@ -73,10 +73,10 @@ int main() {
             }
         }
 
-        clock_gettime(CLOCK_MONOTONIC, &end); // End high-precision timer
+        clock_gettime(CLOCK_MONOTONIC, &end); // End timer
 
         cpu_time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0; // Calculate elapsed time in seconds
-        printf("Processing time: %.9f seconds\n", cpu_time_used); // Print time with nanosecond precision
+        printf("Processing time: %.9f seconds\n", cpu_time_used); // Print timer
 
 
         if (current_read_size == 0) {
