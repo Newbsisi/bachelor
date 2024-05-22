@@ -5,7 +5,6 @@
 #include "api.h"
 
 #define SERVER_PORT 8080
-#define CRYPTO_BYTES 4627
 
 int main() {
     // Create socket

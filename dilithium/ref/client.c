@@ -63,6 +63,7 @@ int main() {
 
     printf("Signature length is %d\n", siglen);
 
+    // Send signature length to server
     ssize_t send_result = send(sockfd, &siglen, sizeof(siglen), 0);
     if (send_result < 0) {
         perror("Sending signature length failed");
