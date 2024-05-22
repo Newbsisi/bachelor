@@ -5,7 +5,7 @@
 #include "api.h"
 
 #define SERVER_PORT 8080
-#define CRYPTO_BYTES 2420
+#define CRYPTO_BYTES 4627
 
 int main() {
     // Create socket
@@ -56,7 +56,7 @@ int main() {
 
     size_t siglen;
     // Receive signature length from client
-    if (recv(client_sockfd, &siglen, 4627, 0) < 0) {
+    if (recv(client_sockfd, &siglen, sizeof(siglen), 0) < 0) {
         perror("Receiving signature length failed");
         return 1;
     } else {
@@ -65,11 +65,10 @@ int main() {
 
     uint8_t sig[pqcrystals_dilithium5_ref_BYTES];
     // Receive signature from client
-    if (recv(client_sockfd, sig, siglen, 0) < 0) {
+    if (recv(client_sockfd, sig, sizeof(sig), 0) < 0) {
         perror("Receiving signature failed");
         return 1;
     }
-    printf("Received signature: ");
 
     // Receive message length from client
     size_t mlen;
@@ -79,6 +78,8 @@ int main() {
         return 1;
     }
     mlen = ntohl(mlen_net); // Convert from network byte order to host byte order
+
+    printf("Received message length: %lu\n", mlen);
 
     // Receive message from client
     char *message = malloc(mlen + 1);
@@ -93,14 +94,14 @@ int main() {
     }
     message[mlen] = '\0'; // Null-terminate the received string
 
+    printf("Received message: %s\n", message);
+
     // Verify signed message
     if(pqcrystals_dilithium5_ref_verify(sig, siglen, (const uint8_t *)message, mlen, pk) != 0) {
         printf("Signature verification failed\n");
     } else {
         printf("Signature verified\n");
     }
-
-    free(message); // Don't forget to free the allocated memory
 
     close(client_sockfd);
     close(sockfd);

@@ -63,14 +63,6 @@ int main() {
 
     printf("Signature length is %d\n", siglen);
 
-    // Send signature to server
-    if (send(sockfd, sig, pqcrystals_dilithium5_ref_BYTES, 0) < 0) {
-        perror("Sending signature failed");
-        return 1;
-    }
-
-    printf("Signature sent\n");
-
     ssize_t send_result = send(sockfd, &siglen, sizeof(siglen), 0);
     if (send_result < 0) {
         perror("Sending signature length failed");
@@ -78,6 +70,14 @@ int main() {
         return 1;
     }
     printf("Signature length sent, send returned: %zd\n", send_result);
+    
+    // Send signature to server
+    if (send(sockfd, sig, pqcrystals_dilithium5_ref_BYTES, 0) < 0) {
+        perror("Sending signature failed");
+        return 1;
+    }
+
+    printf("Signature sent\n");
 
     // Send message length to server
     size_t mlen_net = htonl(mlen); // Convert to network byte order
