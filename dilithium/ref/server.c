@@ -1,80 +1,61 @@
+#include "api.h"
+#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "api.h" // Include the API header file
-
-#define PORT 8080
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 1234
+#define BUFFER_SIZE 4096
+#define MESSAGEBYTES 14
 
 int main() {
-    int server_fd, new_socket;
-    struct sockaddr_in address;
-    int opt = 1;
-    int addrlen = sizeof(address);
+    int serverSocket, clientSocket;
+    struct sockaddr_in serverAddr, clientAddr;
+    socklen_t addr_size;
+    char buffer[BUFFER_SIZE];
+    uint8_t publicKey[pqcrystals_dilithium5_ref_PUBLICKEYBYTES];
+    uint8_t secretKey[pqcrystals_dilithium5_ref_SECRETKEYBYTES];
+    uint8_t signedMessage[MESSAGEBYTES + pqcrystals_dilithium5_ref_BYTES];
+    size_t signedMessageLen;
 
-    // Creating socket file descriptor
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
-    }
+    // Generate keys
+    pqcrystals_dilithium5_ref_keypair(publicKey, secretKey);
 
-    // Forcefully attaching socket to the port 8080
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                                                   &opt, sizeof(opt))) {
-        perror("setsockopt");
-        exit(EXIT_FAILURE);
-    }
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons( PORT );
+    // Create socket
+    serverSocket = socket(PF_INET, SOCK_STREAM, 0);
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(SERVER_PORT);
+    serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
-    // Forcefully attaching socket to the port 8080
-    if (bind(server_fd, (struct sockaddr *)&address,
-                                 sizeof(address))<0) {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
-    }
-    if (listen(server_fd, 3) < 0) {
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-                       (socklen_t*)&addrlen))<0) {
-        perror("accept");
-        exit(EXIT_FAILURE);
-    }
+    // Bind socket
+    bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
-    // Receive public key from client
-    uint8_t public_key[pqcrystals_dilithium3_PUBLICKEYBYTES];
-    read(new_socket, public_key, pqcrystals_dilithium3_PUBLICKEYBYTES);
-    printf("Received public key from client\n");
+    // Listen for connections
+    listen(serverSocket, 1);
 
-    // Receive message from client
-    char buffer[3293] = {0}; // Assuming maximum message length is 1024
-    read(new_socket , buffer, 3293);
-    printf("Received message from client: %s\n", buffer);
-    printf("Message length: %ld\n", strlen(buffer));
+    // Accept a connection
+    addr_size = sizeof(clientAddr);
+    clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &addr_size);
 
-    // Receive signature from client
-    uint8_t signature[pqcrystals_dilithium3_BYTES];
-    read(new_socket , signature, pqcrystals_dilithium3_BYTES);
-    printf("Received signature from client\n");
+    // Send public key to client
+    send(clientSocket, publicKey, pqcrystals_dilithium5_ref_PUBLICKEYBYTES, 0);
+    printf("Public key sent to client\n");
 
-    // Open the signed message
-    uint8_t opened_message[1024]; // Assuming message length is not greater than 1024
-    size_t opened_message_len = 1024; // Initialize the length to the maximum size
-    int opening_result = pqcrystals_dilithium3_ref_open(opened_message, &opened_message_len,
-                                                        buffer, strlen(buffer),
-                                                        public_key);
-    if (opening_result == 0) {
-        printf("Message opening successful! Opened message: %s\n", opened_message);
+    // Receive signed message from client
+    recv(clientSocket, buffer, sizeof(buffer), 0);
+    memcpy(signedMessage, buffer, sizeof(signedMessage));
+    printf("Signed message received from client\n");
+    printf("Size of signed message: %lu\n", sizeof(signedMessage));
+
+    // Verify signed message
+    if (pqcrystals_dilithium5_ref_open((uint8_t*)buffer, &signedMessageLen, signedMessage, sizeof(signedMessage), publicKey) != 0) {
+        printf("Signature verification failed\n");
     } else {
-        printf("Message opening failed!\n");
+        printf("Received message: %s\n", buffer);
     }
 
-    close(new_socket);
-    close(server_fd);
     return 0;
 }

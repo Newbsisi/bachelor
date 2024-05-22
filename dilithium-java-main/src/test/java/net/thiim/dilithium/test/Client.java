@@ -1,5 +1,4 @@
-
-
+package net.thiim.dilithium.test;
 import net.thiim.dilithium.interfaces.DilithiumParameterSpec;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;

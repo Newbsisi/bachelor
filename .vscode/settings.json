@@ -3,5 +3,6 @@
     "files.associations": {
         "api.h": "c",
         "sign.h": "c"
-    }
+    },
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
