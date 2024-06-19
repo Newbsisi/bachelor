@@ -56,7 +56,6 @@ int main() {
         fprintf(stderr, "Failed to sign message\n");
         return 1;
     }
-    printf("Signed message: %s\n", signed_message);
     printf("Size of signed message: %lu\n", signed_message_len);
 
     // Send the signed message
